@@ -1,0 +1,189 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Tile Inspector — LimeZu</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: #151520;
+      color: #eee;
+      font-family: system-ui, sans-serif;
+      padding: 16px;
+    }
+    h1 { margin: 0 0 6px; font-size: 20px; }
+    h2 { margin: 24px 0 8px; font-size: 16px; color: #ffd166; }
+    .hint { color: #aaa; font-size: 13px; margin-bottom: 10px; }
+    .sheet-wrap {
+      position: relative;
+      display: inline-block;
+      border: 1px solid #333;
+      background: #22222a;
+    }
+    canvas {
+      display: block;
+      image-rendering: pixelated;
+    }
+    .coord-readout {
+      position: fixed;
+      top: 16px;
+      right: 16px;
+      background: rgba(0, 0, 0, 0.85);
+      border: 1px solid #ffd166;
+      padding: 14px 18px;
+      border-radius: 8px;
+      font-size: 14px;
+      min-width: 220px;
+    }
+    .coord-readout b { color: #ffd166; font-size: 20px; }
+    .coord-readout .copy {
+      margin-top: 8px;
+      font-size: 11px;
+      color: #888;
+    }
+    .controls { margin: 8px 0; }
+    .controls button {
+      background: #333;
+      color: #eee;
+      border: 1px solid #555;
+      padding: 6px 12px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 12px;
+      margin-right: 6px;
+    }
+    .controls button:hover { background: #444; }
+    .controls button.active { background: #3b6ad4; border-color: #3b6ad4; }
+  </style>
+</head>
+<body>
+  <h1>🔍 Tile Inspector</h1>
+  <p class="hint">
+    Passa o mouse nos tiles pra ver a coordenada <b>(col, row)</b>. Usa isso pra me falar qual coord corresponde a cada móvel/piso que você quer.
+  </p>
+
+  <div class="coord-readout" id="readout">
+    <b id="coord">—, —</b>
+    <div id="tileset-name">passe o mouse</div>
+    <div class="copy">Clique pra copiar</div>
+  </div>
+
+  <h2>Room_Builder_free_16x16.png <span style="color:#888;font-weight:normal;font-size:12px">(paredes + pisos)</span></h2>
+  <div class="controls">
+    <button onclick="setScale(3)" class="active" id="s3-a">3× zoom</button>
+    <button onclick="setScale(4)" id="s4-a">4× zoom</button>
+    <button onclick="setScale(6)" id="s6-a">6× zoom</button>
+    <button onclick="toggleGrid('a')" id="g-a">toggle grid</button>
+    <button onclick="toggleLabels('a')" id="l-a">toggle numbers</button>
+  </div>
+  <div class="sheet-wrap">
+    <canvas id="sheet-a"></canvas>
+  </div>
+
+  <h2>Interiors_free_16x16.png <span style="color:#888;font-weight:normal;font-size:12px">(móveis — role a página, é enorme)</span></h2>
+  <div class="controls">
+    <button onclick="setScale(3)" id="s3-b">3× zoom</button>
+    <button onclick="setScale(4)" class="active" id="s4-b">4× zoom</button>
+    <button onclick="setScale(6)" id="s6-b">6× zoom</button>
+    <button onclick="toggleGrid('b')" id="g-b">toggle grid</button>
+    <button onclick="toggleLabels('b')" id="l-b">toggle numbers</button>
+  </div>
+  <div class="sheet-wrap">
+    <canvas id="sheet-b"></canvas>
+  </div>
+
+  <script>
+    const TILE = 16;
+    const sheets = [
+      { canvas: document.getElementById("sheet-a"), url: "/assets/Interiors_free/16x16/Room_Builder_free_16x16.png", scale: 3, showGrid: true, showLabels: true, name: "Room_Builder" },
+      { canvas: document.getElementById("sheet-b"), url: "/assets/Interiors_free/16x16/Interiors_free_16x16.png", scale: 4, showGrid: true, showLabels: true, name: "Interiors" }
+    ];
+
+    const readout = {
+      coord: document.getElementById("coord"),
+      name: document.getElementById("tileset-name")
+    };
+
+    function render(s) {
+      const img = new Image();
+      img.onload = () => {
+        const cols = Math.floor(img.width / TILE);
+        const rows = Math.floor(img.height / TILE);
+        const cv = s.canvas;
+        cv.width = cols * TILE * s.scale;
+        cv.height = rows * TILE * s.scale;
+        const ctx = cv.getContext("2d");
+        ctx.imageSmoothingEnabled = false;
+        ctx.drawImage(img, 0, 0, cv.width, cv.height);
+        if (s.showGrid) {
+          ctx.strokeStyle = "rgba(255, 209, 102, 0.35)";
+          ctx.lineWidth = 1;
+          for (let c = 0; c <= cols; c++) {
+            ctx.beginPath();
+            ctx.moveTo(c * TILE * s.scale, 0);
+            ctx.lineTo(c * TILE * s.scale, cv.height);
+            ctx.stroke();
+          }
+          for (let r = 0; r <= rows; r++) {
+            ctx.beginPath();
+            ctx.moveTo(0, r * TILE * s.scale);
+            ctx.lineTo(cv.width, r * TILE * s.scale);
+            ctx.stroke();
+          }
+        }
+        if (s.showLabels && s.scale >= 4) {
+          ctx.font = `${Math.max(8, s.scale * 2)}px monospace`;
+          ctx.fillStyle = "rgba(255, 209, 102, 0.9)";
+          ctx.textBaseline = "top";
+          for (let r = 0; r < rows; r++) {
+            for (let c = 0; c < cols; c++) {
+              ctx.fillText(`${c},${r}`, c * TILE * s.scale + 2, r * TILE * s.scale + 2);
+            }
+          }
+        }
+        s.cols = cols;
+        s.rows = rows;
+      };
+      img.src = s.url;
+
+      s.canvas.onmousemove = (e) => {
+        const rect = s.canvas.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+        const col = Math.floor(x / (TILE * s.scale));
+        const row = Math.floor(y / (TILE * s.scale));
+        readout.coord.textContent = `${col}, ${row}`;
+        readout.name.textContent = `${s.name} — (col, row)`;
+      };
+      s.canvas.onclick = () => {
+        const text = readout.coord.textContent;
+        navigator.clipboard?.writeText(text);
+        readout.name.textContent = `copiado: [${text}]`;
+      };
+    }
+
+    function setScale(x) {
+      for (const s of sheets) {
+        s.scale = x;
+        render(s);
+      }
+      document.querySelectorAll(".controls button").forEach(b => b.classList.remove("active"));
+      document.querySelectorAll(`#s${x}-a, #s${x}-b`).forEach(b => b.classList.add("active"));
+    }
+
+    function toggleGrid(which) {
+      const s = which === "a" ? sheets[0] : sheets[1];
+      s.showGrid = !s.showGrid;
+      render(s);
+    }
+    function toggleLabels(which) {
+      const s = which === "a" ? sheets[0] : sheets[1];
+      s.showLabels = !s.showLabels;
+      render(s);
+    }
+
+    for (const s of sheets) render(s);
+  </script>
+</body>
+</html>
