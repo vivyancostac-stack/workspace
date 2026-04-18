@@ -59,149 +59,209 @@ function wallPerimeter(tiles, x1, y1, x2, y2) {
   for (let y = y1; y <= y2; y++) { tiles[y][x1] = T.WALL; tiles[y][x2] = T.WALL; }
 }
 
+// -----------------------------------------------------------------------------
+// MAP LAYOUT (40 × 26) — REAL OFFICE FLOOR PLAN
+// -----------------------------------------------------------------------------
+//
+// The building has one entrance (south, main door) leading into a reception,
+// a central vertical corridor, and rooms organized in 3 horizontal bands:
+//
+//   ┌──────────────────────────────────────────┐
+//   │   MEETING  │  MARIA  │  CARLOS  │  JOÃO  │  y=1..7    (private offices)
+//   │  ─── D ────┼── D ────┼── D ─────┼── D ───│  y=8       (wall with doors)
+//   │         CENTRAL CORRIDOR                 │  y=9..11   (walkway)
+//   │  ── D ─────┼──── D ──┼─────── D ─────────│  y=12      (wall with doors)
+//   │   DEV      │  BATH   │       LOUNGE      │  y=13..19  (workshops)
+//   │  ─── D ────┼─── D ───┼────── D ──────────│  y=20      (wall with doors)
+//   │           RECEPTION (Ana)                │  y=21..24  (lobby)
+//   └─────────────── MAIN DOOR ────────────────┘  y=25       (outer wall + exit)
+//
+// Main entrance: tiles[25][19..20] = DOOR (visible south exit).
+
 export function buildOfficeMap() {
   const W = 40;
-  const H = 24;
+  const H = 26;
   const tiles = new Array(H).fill(0).map(() => new Array(W).fill(T.FLOOR_WOOD));
   const props = new Array(H).fill(0).map(() => new Array(W).fill(P.NONE));
 
-  // outer walls
+  // Outer walls
   for (let x = 0; x < W; x++) { tiles[0][x] = T.WALL; tiles[H - 1][x] = T.WALL; }
   for (let y = 0; y < H; y++) { tiles[y][0] = T.WALL; tiles[y][W - 1] = T.WALL; }
+  // Main entrance (south wall, double-door)
+  tiles[H - 1][19] = T.DOOR;
+  tiles[H - 1][20] = T.DOOR;
 
-  // =============== RECEPTION (top, wide, white tile) ===============
-  fillTiles(tiles, 1, 1, W - 2, 6, T.FLOOR_WHITE);
-  // internal wall between reception and rest (y=7), with openings
-  for (let x = 1; x <= W - 2; x++) tiles[7][x] = T.WALL;
-  tiles[7][10] = T.DOOR; tiles[7][20] = T.DOOR; tiles[7][30] = T.DOOR;
-  // reception desk in center (Ana sits behind it)
-  for (let x = 16; x <= 22; x++) props[4][x] = P.DESK;
-  props[3][19] = P.MONITOR;
-  // welcome plants + paintings on walls
-  props[1][2]  = P.PAINTING_GREEN;
-  props[1][10] = P.PAINTING_BLUE;
-  props[1][20] = P.PAINTING_RED;
-  props[1][28] = P.PAINTING_BLUE;
-  props[1][37] = P.CLOCK;
-  props[1][6]  = P.PLANT;
-  props[1][14] = P.PLANT;
-  props[1][25] = P.PLANT;
-  props[1][33] = P.PLANT;
-  // waiting sofas
-  props[5][3] = P.COUCH_LEFT; props[5][4] = P.COUCH_RIGHT;
-  props[5][36] = P.COUCH_LEFT; props[5][37] = P.COUCH_RIGHT;
+  // ------------------------- HORIZONTAL DIVIDERS -----------------------------
+  // y=8, y=12, y=20 are internal horizontal walls.
+  for (let x = 1; x <= W - 2; x++) {
+    tiles[8][x]  = T.WALL;
+    tiles[12][x] = T.WALL;
+    tiles[20][x] = T.WALL;
+  }
+  // Doors in y=8 (reception band not above — this connects offices to corridor)
+  tiles[8][5]  = T.DOOR; // Meeting
+  tiles[8][15] = T.DOOR; // Maria
+  tiles[8][25] = T.DOOR; // Carlos
+  tiles[8][34] = T.DOOR; // João
+  // Doors in y=12 (corridor to workshops)
+  tiles[12][5]  = T.DOOR; // Dev
+  tiles[12][17] = T.DOOR; // Bathroom
+  tiles[12][30] = T.DOOR; // Lounge
+  // Doors in y=20 (workshops to reception)
+  tiles[20][5]  = T.DOOR;
+  tiles[20][17] = T.DOOR;
+  tiles[20][30] = T.DOOR;
 
-  // =============== MEETING ROOM (shared) — left ===============
-  wallPerimeter(tiles, 1, 8, 10, 15);
-  tiles[8][5] = T.DOOR;
-  fillTiles(tiles, 2, 9, 9, 14, T.FLOOR_CARPET);
-  for (let x = 4; x <= 7; x++) props[11][x] = P.TABLE;
-  props[10][4] = P.CHAIR_MEETING; props[10][5] = P.CHAIR_MEETING;
-  props[10][6] = P.CHAIR_MEETING; props[10][7] = P.CHAIR_MEETING;
-  props[12][4] = P.CHAIR_MEETING; props[12][5] = P.CHAIR_MEETING;
-  props[12][6] = P.CHAIR_MEETING; props[12][7] = P.CHAIR_MEETING;
-  props[9][3] = P.WHITEBOARD;
-  props[9][8] = P.PAINTING_GREEN;
+  // --------------------- VERTICAL WALLS (inside bands) -----------------------
+  // Offices row dividers (y=1..7)
+  for (let y = 1; y <= 7; y++) {
+    tiles[y][10] = T.WALL;
+    tiles[y][20] = T.WALL;
+    tiles[y][30] = T.WALL;
+  }
+  // Workshops row dividers (y=13..19)
+  for (let y = 13; y <= 19; y++) {
+    tiles[y][12] = T.WALL;
+    tiles[y][23] = T.WALL;
+  }
 
-  // =============== MARIA'S PRIVATE OFFICE ===============
-  // x=12..20, y=8..15
-  wallPerimeter(tiles, 12, 8, 20, 15);
-  tiles[8][16] = T.DOOR;
-  fillTiles(tiles, 13, 9, 19, 14, T.FLOOR_CARPET);
-  props[11][15] = P.DESK; props[11][16] = P.DESK;
-  props[10][16] = P.MONITOR;
-  props[12][16] = P.CHAIR;
-  props[9][14]  = P.WHITEBOARD; // OKR board
-  props[9][18]  = P.PAINTING_RED;
-  props[14][13] = P.BOOKCASE;
-  props[14][19] = P.PLANT;
-  props[13][13] = P.PLANT;
+  // ============================= OFFICES (y=1..7) ============================
+  // MEETING ROOM (x=1..9) — blue carpet
+  fillTiles(tiles, 1, 1, 9, 7, T.FLOOR_CARPET);
+  // long meeting table
+  for (let x = 3; x <= 7; x++) props[4][x] = P.TABLE;
+  props[3][3] = P.CHAIR_MEETING; props[3][5] = P.CHAIR_MEETING; props[3][7] = P.CHAIR_MEETING;
+  props[5][3] = P.CHAIR_MEETING; props[5][5] = P.CHAIR_MEETING; props[5][7] = P.CHAIR_MEETING;
+  props[1][2] = P.WHITEBOARD;
+  props[1][8] = P.PAINTING_BLUE;
+  props[7][1] = P.PLANT;
 
-  // =============== CARLOS'S IT OFFICE ===============
-  // x=22..30, y=8..15
-  wallPerimeter(tiles, 22, 8, 30, 15);
-  tiles[8][26] = T.DOOR;
-  fillTiles(tiles, 23, 9, 29, 14, T.FLOOR_TILE_KITCHEN);
-  // two monitors + desk (tech vibe)
-  props[11][25] = P.DESK; props[11][26] = P.DESK;
-  props[10][25] = P.MONITOR; props[10][26] = P.MONITOR;
-  props[12][26] = P.CHAIR;
-  // server racks (reuse bookcase sprite)
-  props[14][23] = P.BOOKCASE; props[14][24] = P.BOOKCASE;
-  props[14][29] = P.BOOKCASE;
-  props[9][28]  = P.PAINTING_GREEN;
-  props[9][23]  = P.CLOCK;
-  props[13][29] = P.PLANT;
+  // MARIA'S OFFICE (x=11..19) — carpet + small desk
+  fillTiles(tiles, 11, 1, 19, 7, T.FLOOR_CARPET);
+  props[3][14] = P.DESK; props[3][15] = P.DESK;
+  props[2][15] = P.MONITOR;
+  props[4][15] = P.CHAIR;
+  props[1][12] = P.WHITEBOARD;   // OKR board
+  props[1][18] = P.PAINTING_RED;
+  props[7][12] = P.BOOKCASE;
+  props[7][18] = P.PLANT;
 
-  // =============== JOÃO'S CAFÉ ===============
-  // x=32..38, y=8..15
-  wallPerimeter(tiles, 32, 8, 38, 15);
-  tiles[8][35] = T.DOOR;
-  fillTiles(tiles, 33, 9, 37, 14, T.FLOOR_TILE_KITCHEN);
-  props[9][33] = P.FRIDGE;
-  props[9][35] = P.COFFEE_MACHINE;
-  props[9][37] = P.SINK;
-  // bistro
-  props[12][34] = P.TABLE;
-  props[11][34] = P.CHAIR; props[13][34] = P.CHAIR;
-  props[12][37] = P.TABLE;
-  props[11][37] = P.CHAIR;
-  props[14][33] = P.PLANT;
+  // CARLOS'S IT OFFICE (x=21..29) — tech tile + 2 monitors
+  fillTiles(tiles, 21, 1, 29, 7, T.FLOOR_TILE_KITCHEN);
+  props[3][24] = P.DESK; props[3][25] = P.DESK;
+  props[2][24] = P.MONITOR; props[2][25] = P.MONITOR;
+  props[4][25] = P.CHAIR;
+  props[7][22] = P.BOOKCASE; props[7][23] = P.BOOKCASE; // server racks
+  props[1][28] = P.CLOCK;
+  props[1][22] = P.PAINTING_GREEN;
+  props[7][28] = P.PLANT;
 
-  // =============== DEV BULLPEN (player zone) ===============
-  // x=1..16, y=17..22 (wood default)
-  // rows of desks
-  const deskRows = [
-    { y: 18, xs: [3, 5, 7, 9, 11, 13, 15] },
-    { y: 21, xs: [3, 5, 7, 9, 11, 13, 15] }
+  // JOÃO'S CAFÉ (x=31..38) — kitchen tile + fridge/coffee
+  fillTiles(tiles, 31, 1, 38, 7, T.FLOOR_TILE_KITCHEN);
+  props[1][32] = P.FRIDGE;
+  props[1][34] = P.COFFEE_MACHINE;
+  props[1][36] = P.SINK;
+  props[4][33] = P.TABLE;
+  props[3][33] = P.CHAIR; props[5][33] = P.CHAIR;
+  props[4][37] = P.TABLE;
+  props[3][37] = P.CHAIR;
+  props[7][32] = P.PLANT;
+  props[7][37] = P.PLANT;
+
+  // =========================== CORRIDOR (y=9..11) ============================
+  // Stays FLOOR_WOOD default. Plants along the edges.
+  props[9][1]  = P.PLANT;
+  props[9][W-2] = P.PLANT;
+  props[11][1] = P.PLANT;
+  props[11][W-2] = P.PLANT;
+  // A small rug in the middle as a focal point
+  for (let x = 18; x <= 21; x++) props[10][x] = P.RUG;
+
+  // =========================== WORKSHOPS (y=13..19) ==========================
+  // DEV BULLPEN (x=1..11) — wood floor, 2 rows of desks facing north/south
+  // Desks face north (monitor above desk, chair below)
+  const devDeskRows = [
+    { deskY: 14, monitorY: 13, chairY: 15 },
+    { deskY: 18, monitorY: 17, chairY: 19 }
   ];
-  for (const row of deskRows) {
-    for (const x of row.xs) {
-      props[row.y][x] = P.DESK;
-      props[row.y - 1][x] = P.MONITOR;
-      props[row.y + 1] && props[row.y + 1][x] === P.NONE && (props[row.y + 1][x] = P.CHAIR);
+  const devXs = [3, 6, 9];
+  for (const r of devDeskRows) {
+    for (const x of devXs) {
+      props[r.deskY][x]    = P.DESK;
+      props[r.monitorY][x] = P.MONITOR;
+      if (props[r.chairY][x] === P.NONE) props[r.chairY][x] = P.CHAIR;
     }
   }
-  props[17][1]  = P.PLANT;
-  props[17][16] = P.PLANT;
+  props[13][10] = P.PLANT;
+  props[19][10] = P.PLANT;
 
-  // =============== BATHROOM ===============
-  // x=18..21, y=17..22
-  wallPerimeter(tiles, 18, 16, 21, 22);
-  tiles[16][19] = T.DOOR;
-  fillTiles(tiles, 19, 17, 20, 21, T.FLOOR_BATHROOM);
-  props[18][19] = P.TOILET;
-  props[20][19] = P.SINK;
-  props[17][20] = P.PAINTING_BLUE;
+  // BATHROOM (x=13..22) — bathroom tile, toilet + sink
+  fillTiles(tiles, 13, 13, 22, 19, T.FLOOR_BATHROOM);
+  props[14][14] = P.TOILET;
+  props[14][16] = P.TOILET;
+  props[14][18] = P.TOILET;
+  props[18][14] = P.SINK;
+  props[18][16] = P.SINK;
+  props[18][18] = P.SINK;
+  props[13][21] = P.PAINTING_BLUE;
 
-  // =============== LOUNGE ===============
-  // x=23..38, y=17..22 (open area, wood)
-  fillTiles(tiles, 23, 17, 38, 22, T.FLOOR_WOOD);
-  // rug
-  for (let y = 19; y <= 20; y++) for (let x = 28; x <= 32; x++) props[y][x] = P.RUG;
-  // U-shaped sofas around coffee table
-  props[18][28] = P.COUCH_LEFT;
-  props[18][29] = P.COUCH_MID;
-  props[18][30] = P.COUCH_MID;
-  props[18][31] = P.COUCH_MID;
-  props[18][32] = P.COUCH_RIGHT;
-  props[19][27] = P.COUCH_LEFT; props[20][27] = P.COUCH_RIGHT;
-  props[19][33] = P.COUCH_LEFT; props[20][33] = P.COUCH_RIGHT;
-  props[20][30] = P.COFFEE_TABLE;
-  // decor
-  props[17][23] = P.BOOKCASE;
-  props[17][37] = P.PLANT;
-  props[22][23] = P.PLANT;
-  props[22][37] = P.PLANT;
+  // LOUNGE (x=24..38) — wood + U-sofa + coffee table
+  // Rug center
+  for (let y = 15; y <= 17; y++) for (let x = 29; x <= 33; x++) props[y][x] = P.RUG;
+  // U-shaped sofa
+  props[14][29] = P.COUCH_LEFT;
+  props[14][30] = P.COUCH_MID;
+  props[14][31] = P.COUCH_MID;
+  props[14][32] = P.COUCH_MID;
+  props[14][33] = P.COUCH_RIGHT;
+  props[15][28] = P.COUCH_LEFT;  props[16][28] = P.COUCH_RIGHT;
+  props[15][34] = P.COUCH_LEFT;  props[16][34] = P.COUCH_RIGHT;
+  // Coffee table in the middle
+  props[16][31] = P.COFFEE_TABLE;
+  // Bookcase + plants
+  props[13][25] = P.BOOKCASE;
+  props[13][37] = P.BOOKCASE;
+  props[19][25] = P.PLANT;
+  props[19][37] = P.PLANT;
+  props[19][31] = P.PLANT;
+
+  // ============================ RECEPTION (y=21..24) =========================
+  fillTiles(tiles, 1, 21, W - 2, 24, T.FLOOR_WHITE);
+  // Ana's central reception desk (wide)
+  for (let x = 16; x <= 22; x++) props[22][x] = P.DESK;
+  props[21][19] = P.MONITOR;
+  // Waiting sofas on both sides
+  props[23][3] = P.COUCH_LEFT;
+  props[23][4] = P.COUCH_MID;
+  props[23][5] = P.COUCH_RIGHT;
+  props[23][34] = P.COUCH_LEFT;
+  props[23][35] = P.COUCH_MID;
+  props[23][36] = P.COUCH_RIGHT;
+  // Coffee tables beside them
+  props[24][4] = P.COFFEE_TABLE;
+  props[24][35] = P.COFFEE_TABLE;
+  // Decor: plants at corners, paintings on the north wall
+  props[21][1]  = P.PLANT;
+  props[21][10] = P.PAINTING_BLUE;
+  props[21][14] = P.PAINTING_RED;
+  props[21][24] = P.PAINTING_GREEN;
+  props[21][28] = P.PAINTING_BLUE;
+  props[21][W-2] = P.PLANT;
+  // Rug in front of the desk
+  for (let y = 23; y <= 23; y++) for (let x = 17; x <= 21; x++) props[y][x] = P.RUG;
 
   return { tiles, props, width: W, height: H };
 }
 
-// Nameplates to render above private-office doors (drawn by Map, not tiles)
+// Nameplates to render above private-office doors (door tile is on y=8)
 export const NAMEPLATES = [
-  { text: "Maria — Gerente",   tx: 16, ty: 8 },
-  { text: "Carlos — TI",       tx: 26, ty: 8 },
-  { text: "João — Café",       tx: 35, ty: 8 }
+  { text: "Sala de Reunião", tx: 5,  ty: 8 },
+  { text: "Maria — Gerente", tx: 15, ty: 8 },
+  { text: "Carlos — TI",     tx: 25, ty: 8 },
+  { text: "João — Café",     tx: 34, ty: 8 },
+  { text: "Dev Bullpen",     tx: 5,  ty: 12 },
+  { text: "Banheiro",        tx: 17, ty: 12 },
+  { text: "Lounge",          tx: 30, ty: 12 }
 ];
 
 export function isBlocked(map, tx, ty) {
@@ -214,14 +274,15 @@ export function isBlocked(map, tx, ty) {
 }
 
 export const ZONES = [
-  { id: "reception",  name: "Recepção",            x: 1,  y: 1,  w: 38, h: 6,  private: false },
-  { id: "meeting",    name: "Sala de Reunião",     x: 2,  y: 9,  w: 8,  h: 6,  private: true },
-  { id: "maria",      name: "Escritório da Maria", x: 13, y: 9,  w: 7,  h: 6,  private: true },
-  { id: "carlos",     name: "Sala de TI",          x: 23, y: 9,  w: 7,  h: 6,  private: true },
-  { id: "joao",       name: "Café do João",        x: 33, y: 9,  w: 5,  h: 6,  private: false },
-  { id: "devbullpen", name: "Área Dev",            x: 1,  y: 17, w: 16, h: 6,  private: false },
-  { id: "bathroom",   name: "Banheiro",            x: 19, y: 17, w: 2,  h: 5,  private: true },
-  { id: "lounge",     name: "Lounge",              x: 23, y: 17, w: 16, h: 6,  private: false }
+  { id: "meeting",    name: "Sala de Reunião",     x: 1,  y: 1,  w: 9,  h: 7,  private: true },
+  { id: "maria",      name: "Escritório da Maria", x: 11, y: 1,  w: 9,  h: 7,  private: true },
+  { id: "carlos",     name: "Sala de TI",          x: 21, y: 1,  w: 9,  h: 7,  private: true },
+  { id: "joao",       name: "Café do João",        x: 31, y: 1,  w: 8,  h: 7,  private: false },
+  { id: "corridor",   name: "Corredor",            x: 1,  y: 9,  w: 38, h: 3,  private: false },
+  { id: "devbullpen", name: "Área Dev",            x: 1,  y: 13, w: 11, h: 7,  private: false },
+  { id: "bathroom",   name: "Banheiro",            x: 13, y: 13, w: 10, h: 7,  private: true },
+  { id: "lounge",     name: "Lounge",              x: 24, y: 13, w: 15, h: 7,  private: false },
+  { id: "reception",  name: "Recepção",            x: 1,  y: 21, w: 38, h: 4,  private: false }
 ];
 
 export function zoneAt(px, py) {

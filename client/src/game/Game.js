@@ -8,10 +8,10 @@ const PROXIMITY = 48; // px — how close to trigger NPC chat
 
 // NPCs placed at fixed tile positions (center of tile)
 const NPC_PLACEMENTS = [
-  { id: "ana",    name: "Ana",    role: "Recepcionista",  tx: 19, ty: 5,  facing: 0 },
-  { id: "maria",  name: "Maria",  role: "Gerente",        tx: 16, ty: 12, facing: 3 },
-  { id: "carlos", name: "Carlos", role: "Suporte / TI",   tx: 26, ty: 12, facing: 3 },
-  { id: "joao",   name: "João",   role: "Colega do Café", tx: 34, ty: 13, facing: 3 }
+  { id: "ana",    name: "Ana",    role: "Recepcionista",  tx: 19, ty: 23, facing: 0 },
+  { id: "maria",  name: "Maria",  role: "Gerente",        tx: 15, ty: 4,  facing: 0 },
+  { id: "carlos", name: "Carlos", role: "Suporte / TI",   tx: 25, ty: 4,  facing: 0 },
+  { id: "joao",   name: "João",   role: "Colega do Café", tx: 34, ty: 4,  facing: 0 }
 ];
 
 export class Game {
@@ -25,12 +25,13 @@ export class Game {
     this.inputEnabled = true;
     preloadCharacters();
 
+    // Spawn just inside the main entrance (south), facing north into the lobby
     this.player = {
       id: "player",
       avatar: "Adam",
       x: 20 * TILE + TILE / 2,
-      y: 3 * TILE + TILE / 2,
-      dir: 0,
+      y: 24 * TILE + TILE / 2,
+      dir: 3,
       phase: 0,
       moving: false
     };

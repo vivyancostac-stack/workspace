@@ -79,24 +79,11 @@ export const PROP_SPRITES = {
 
 // -------------------- Drawing --------------------
 
-// Floors only — walls fall back to procedural (by returning false).
-export function drawFloorTile(ctx, coordKey, dx, dy) {
-  const sheet = sheets.rooms;
-  if (!sheet || !sheet.complete || !sheet.naturalWidth) return false;
-
-  let coord;
-  if (coordKey === "door") coord = DOOR_FLOOR;
-  else if (coordKey === "wall") return false; // let procedural draw walls
-  else coord = FLOOR_TILES[coordKey];
-  if (!coord) return false;
-
-  const [col, row] = coord;
-  ctx.drawImage(
-    sheet,
-    col * TILE_SRC, row * TILE_SRC, TILE_SRC, TILE_SRC,
-    dx, dy, TILE, TILE
-  );
-  return true;
+// Floors + walls fall back to procedural (guaranteed to render).
+// Returning false everywhere forces Map.js to use its procedural renderer.
+// This avoids black voids from mis-guessed LimeZu tile coordinates.
+export function drawFloorTile(_ctx, _coordKey, _dx, _dy) {
+  return false;
 }
 
 export function drawProp(ctx, spriteKey, dx, dy) {
