@@ -195,15 +195,12 @@ export function buildOfficeMap() {
   props[13][10] = P.PLANT;
   props[19][10] = P.PLANT;
 
-  // BATHROOM (x=13..22) — bathroom tile, toilet + sink
+  // BATHROOM (x=13..22) — clean, simple: 1 toilet, 1 sink, mirror (painting)
   fillTiles(tiles, 13, 13, 22, 19, T.FLOOR_BATHROOM);
-  props[14][14] = P.TOILET;
-  props[14][16] = P.TOILET;
-  props[14][18] = P.TOILET;
-  props[18][14] = P.SINK;
-  props[18][16] = P.SINK;
-  props[18][18] = P.SINK;
-  props[13][21] = P.PAINTING_BLUE;
+  props[14][15] = P.TOILET;
+  props[14][20] = P.SINK;
+  props[13][20] = P.PAINTING_BLUE; // "mirror" above sink
+  props[19][14] = P.PLANT;         // decorative plant
 
   // LOUNGE (x=24..38) — wood + U-sofa + coffee table
   // Rug center
@@ -227,8 +224,10 @@ export function buildOfficeMap() {
 
   // ============================ RECEPTION (y=21..24) =========================
   fillTiles(tiles, 1, 21, W - 2, 24, T.FLOOR_WHITE);
-  // Ana's central reception desk (wide)
-  for (let x = 16; x <= 22; x++) props[22][x] = P.DESK;
+  // Ana's compact reception desk (3 tiles, not a whole wall of them)
+  props[22][18] = P.DESK;
+  props[22][19] = P.DESK;
+  props[22][20] = P.DESK;
   props[21][19] = P.MONITOR;
   // Waiting sofas on both sides
   props[23][3] = P.COUCH_LEFT;
@@ -247,8 +246,8 @@ export function buildOfficeMap() {
   props[21][24] = P.PAINTING_GREEN;
   props[21][28] = P.PAINTING_BLUE;
   props[21][W-2] = P.PLANT;
-  // Rug in front of the desk
-  for (let y = 23; y <= 23; y++) for (let x = 17; x <= 21; x++) props[y][x] = P.RUG;
+  // "Welcome" rug in front of the entrance
+  for (let x = 18; x <= 21; x++) props[24][x] = P.RUG;
 
   return { tiles, props, width: W, height: H };
 }
@@ -390,10 +389,11 @@ function drawTile(ctx, t, px, py, tx, ty, map) {
     ctx.fillStyle = "rgba(255,255,255,0.35)";
     ctx.fillRect(px + 3, py + 3, 3, 1);
   } else if (t === T.FLOOR_BATHROOM) {
-    const alt = ((tx + ty) % 2 === 0) ? "#b8d4d8" : "#a4c4ca";
+    // light cool-blue tile (no green cast)
+    const alt = ((tx + ty) % 2 === 0) ? "#dae4ee" : "#c8d4e2";
     ctx.fillStyle = alt;
     ctx.fillRect(px, py, TILE, TILE);
-    ctx.fillStyle = "rgba(0,0,0,0.1)";
+    ctx.fillStyle = "rgba(0,0,0,0.08)";
     ctx.fillRect(px, py, TILE, 1);
     ctx.fillRect(px, py, 1, TILE);
   } else if (t === T.WALL) {

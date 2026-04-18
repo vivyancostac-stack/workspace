@@ -86,17 +86,9 @@ export function drawFloorTile(_ctx, _coordKey, _dx, _dy) {
   return false;
 }
 
-export function drawProp(ctx, spriteKey, dx, dy) {
-  const sheet = sheets.interiors;
-  if (!sheet || !sheet.complete || !sheet.naturalWidth) return false;
-  const s = PROP_SPRITES[spriteKey];
-  if (!s) return false;
-  const offX = (s.offsetX || 0) * TILE;
-  const offY = (s.offsetY || 0) * TILE;
-  ctx.drawImage(
-    sheet,
-    s.col * TILE_SRC, s.row * TILE_SRC, s.w * TILE_SRC, s.h * TILE_SRC,
-    dx + offX, dy + offY, s.w * TILE, s.h * TILE
-  );
-  return true;
+// Props also fall back to procedural for now — the LimeZu coord guesses were
+// producing "half-a-bed" sprites in slots we meant to be monitors/toilets/etc.
+// Procedural isn't as pretty but it's consistent and readable.
+export function drawProp(_ctx, _spriteKey, _dx, _dy) {
+  return false;
 }
