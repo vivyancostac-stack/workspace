@@ -105,12 +105,12 @@ export function buildOfficeMap() {
   tiles[8][34] = T.DOOR; // João
   // Doors in y=12 (corridor to workshops)
   tiles[12][5]  = T.DOOR; // Dev
-  tiles[12][17] = T.DOOR; // Bathroom
-  tiles[12][30] = T.DOOR; // Lounge
+  tiles[12][22] = T.DOOR; // Lounge
+  tiles[12][36] = T.DOOR; // Bathroom (right corner)
   // Doors in y=20 (workshops to reception)
   tiles[20][5]  = T.DOOR;
-  tiles[20][17] = T.DOOR;
-  tiles[20][30] = T.DOOR;
+  tiles[20][22] = T.DOOR;
+  tiles[20][36] = T.DOOR;
 
   // --------------------- VERTICAL WALLS (inside bands) -----------------------
   // Offices row dividers (y=1..7)
@@ -119,10 +119,10 @@ export function buildOfficeMap() {
     tiles[y][20] = T.WALL;
     tiles[y][30] = T.WALL;
   }
-  // Workshops row dividers (y=13..19)
+  // Workshops row dividers (y=13..19) — Dev | Lounge | Bathroom (right corner)
   for (let y = 13; y <= 19; y++) {
     tiles[y][12] = T.WALL;
-    tiles[y][23] = T.WALL;
+    tiles[y][33] = T.WALL;
   }
 
   // ============================= OFFICES (y=1..7) ============================
@@ -195,32 +195,33 @@ export function buildOfficeMap() {
   props[13][10] = P.PLANT;
   props[19][10] = P.PLANT;
 
-  // BATHROOM (x=13..22) — clean, simple: 1 toilet, 1 sink, mirror (painting)
-  fillTiles(tiles, 13, 13, 22, 19, T.FLOOR_BATHROOM);
-  props[14][15] = P.TOILET;
-  props[14][20] = P.SINK;
-  props[13][20] = P.PAINTING_BLUE; // "mirror" above sink
-  props[19][14] = P.PLANT;         // decorative plant
-
-  // LOUNGE (x=24..38) — wood + U-sofa + coffee table
+  // LOUNGE (x=13..32) — big open social area with U-sofa and coffee table
   // Rug center
-  for (let y = 15; y <= 17; y++) for (let x = 29; x <= 33; x++) props[y][x] = P.RUG;
+  for (let y = 15; y <= 17; y++) for (let x = 20; x <= 25; x++) props[y][x] = P.RUG;
   // U-shaped sofa
-  props[14][29] = P.COUCH_LEFT;
-  props[14][30] = P.COUCH_MID;
-  props[14][31] = P.COUCH_MID;
-  props[14][32] = P.COUCH_MID;
-  props[14][33] = P.COUCH_RIGHT;
-  props[15][28] = P.COUCH_LEFT;  props[16][28] = P.COUCH_RIGHT;
-  props[15][34] = P.COUCH_LEFT;  props[16][34] = P.COUCH_RIGHT;
+  props[14][20] = P.COUCH_LEFT;
+  props[14][21] = P.COUCH_MID;
+  props[14][22] = P.COUCH_MID;
+  props[14][23] = P.COUCH_MID;
+  props[14][24] = P.COUCH_MID;
+  props[14][25] = P.COUCH_RIGHT;
+  props[15][19] = P.COUCH_LEFT;  props[16][19] = P.COUCH_RIGHT;
+  props[15][26] = P.COUCH_LEFT;  props[16][26] = P.COUCH_RIGHT;
   // Coffee table in the middle
-  props[16][31] = P.COFFEE_TABLE;
-  // Bookcase + plants
-  props[13][25] = P.BOOKCASE;
-  props[13][37] = P.BOOKCASE;
-  props[19][25] = P.PLANT;
-  props[19][37] = P.PLANT;
+  props[16][22] = P.COFFEE_TABLE;
+  // Bookcase + plants + extras
+  props[13][14] = P.BOOKCASE;
+  props[13][31] = P.BOOKCASE;
+  props[19][14] = P.PLANT;
+  props[19][22] = P.PLANT;
   props[19][31] = P.PLANT;
+
+  // BATHROOM (x=34..38, bottom-right corner) — tucked away against outer wall
+  fillTiles(tiles, 34, 13, 38, 19, T.FLOOR_BATHROOM);
+  props[14][35] = P.TOILET;
+  props[14][37] = P.SINK;
+  props[13][37] = P.PAINTING_BLUE; // "mirror" above sink
+  props[19][35] = P.PLANT;         // decorative plant
 
   // ============================ RECEPTION (y=21..24) =========================
   fillTiles(tiles, 1, 21, W - 2, 24, T.FLOOR_WHITE);
@@ -259,8 +260,8 @@ export const NAMEPLATES = [
   { text: "Carlos — TI",     tx: 25, ty: 8 },
   { text: "João — Café",     tx: 34, ty: 8 },
   { text: "Dev Bullpen",     tx: 5,  ty: 12 },
-  { text: "Banheiro",        tx: 17, ty: 12 },
-  { text: "Lounge",          tx: 30, ty: 12 }
+  { text: "Lounge",          tx: 22, ty: 12 },
+  { text: "Banheiro",        tx: 36, ty: 12 }
 ];
 
 export function isBlocked(map, tx, ty) {
@@ -279,8 +280,8 @@ export const ZONES = [
   { id: "joao",       name: "Café do João",        x: 31, y: 1,  w: 8,  h: 7,  private: false },
   { id: "corridor",   name: "Corredor",            x: 1,  y: 9,  w: 38, h: 3,  private: false },
   { id: "devbullpen", name: "Área Dev",            x: 1,  y: 13, w: 11, h: 7,  private: false },
-  { id: "bathroom",   name: "Banheiro",            x: 13, y: 13, w: 10, h: 7,  private: true },
-  { id: "lounge",     name: "Lounge",              x: 24, y: 13, w: 15, h: 7,  private: false },
+  { id: "lounge",     name: "Lounge",              x: 13, y: 13, w: 20, h: 7,  private: false },
+  { id: "bathroom",   name: "Banheiro",            x: 34, y: 13, w: 5,  h: 7,  private: true },
   { id: "reception",  name: "Recepção",            x: 1,  y: 21, w: 38, h: 4,  private: false }
 ];
 
